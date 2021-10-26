@@ -1,0 +1,452 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df=pd.read_csv('../input/insurance/insurance.csv')
+df.head()
+
+# Data types
+df.info()
+
+#Data Summary
+df.describe()
+
+# Finding Null Values
+df.isnull().sum()
+
+# Classifying and counting total no. of 'sex' , 'region ' ,'smoker
+print(df['sex'].value_counts())
+print()
+print(df['region'].value_counts())
+print()
+print(df['smoker'].value_counts())
+
+# Exploratory Data analysis
+sns.pairplot(df)
+
+# Correlation
+df_corr=df[['age','bmi','children','charges']]
+df_corr.corr()
+
+# Healthy People
+df_healthy=df[(df['bmi']>18.5) & (df['bmi']<24.9)]
+a=df_healthy.count()
+print('healthy_people:')
+print(a)
+df_healthy_region=df_healthy.groupby('region')
+df_healthy_region.describe().round(2)
+
+sns.catplot(x="sex", y="charges", hue="smoker",
+                col="region", height=4, data=df_healthy)
+
+
+sns.catplot(x="sex", y="age", hue="smoker",
+                col="region", height=4, data=df_healthy)
+
+
+# Underweight People
+df_underweight=df[(df['bmi']<18.5)]
+a=df_underweight.count()
+print('underweight_people:')
+print(a)
+df_underweigh_region=df_underweight.groupby('region')
+df_underweigh_region.describe().round(2)
+
+sns.catplot(x="sex", y="charges", hue="smoker",
+                col="region", height=4, data=df_underweight)
+
+
+sns.catplot(x="sex", y="age", hue="smoker",
+                col="region", height=4, data=df_underweight)
+
+# Overweight People
+df_overweight=df[(df['bmi']>24.9)]
+b=df_overweight.count()
+print('overweight_people:')
+print(b)
+df_overweight_region=df_overweight.groupby('region')
+df_overweight_region.describe().round(2)
+
+sns.catplot(x="sex", y="charges", hue="smoker",
+                col="region", height=4, data=df_overweight)
+
+sns.catplot(x="sex", y="age", hue="smoker",
+                col="region", height=4, data=df_overweight)
+
+sns.lmplot(x="age", y="charges", hue="smoker",col="sex",markers=["o", "x"] ,data=df)
+
+
+sns.lmplot(x="bmi", y="charges", hue="smoker",col="sex",markers=["o", "x"] ,data=df)
+
+sns.displot(data=df, x="charges", kde=True)
+
+
+#changing Charges distribution into Normal Distribution
+#Normality Test (Shapiro - Wilk Test)
+
+import numpy.random as nr
+from scipy.stats import shapiro
+# seed the random number generator
+nr.seed(1)
+# normality test
+stat, p = shapiro(df['charges'])
+print('Statistics=%.3f, p=%.3f' % (stat, p))
+# interpret
+alpha = 0.05
+if p > alpha:
+    print('Sample looks Gaussian (fail to reject H0)')
+else:
+    print('Sample does not look Gaussian (reject H0)')
+
+
+x=df['charges']
+print(np.shape(x))
+# In order to feed x to sklearn, it should be a 2D array (a matrix)
+# Therefore, we must reshape it 
+x1 = x.values.reshape(-1,1)
+print(np.shape(x1))
+
+
+# Quantile Transformation
+from pandas import read_csv
+from pandas import DataFrame
+from pandas.plotting import scatter_matrix
+from sklearn.preprocessing import QuantileTransformer
+from matplotlib import pyplot
+# perform a normal quantile transform of the dataset
+trans = QuantileTransformer(n_quantiles=1000, output_distribution='normal',random_state=300)
+data = trans.fit_transform(x1)
+# convert the array back to a dataframe
+dataset = DataFrame(data,columns=['Charges'])
+# histograms of the variables
+dataset.hist()
+pyplot.show()
+
+
+df['Charges']=dataset['Charges']
+df.drop(['charges'],axis=1,inplace=True)
+
+df=df[df['Charges']<3]
+df=df[df['Charges']>-3]
+df.head()
+
+df.reset_index(inplace=True)
+#df.dropna(inplace=True)
+
+# inverse transformation checking
+a=trans.inverse_transform(trans.transform(x1))
+b1=pd.DataFrame(a,columns=['Charges'])
+b1.head(5)
+
+# QQ Plot for normality test of Charges
+import numpy as np
+import statsmodels.api as sm
+import pylab
+
+sm.qqplot(df['Charges'], line='45')
+pylab.show()
+
+
+
+from scipy.stats import shapiro
+# seed the random number generator
+nr.seed(1)
+# normality test
+stat, p = shapiro(df['Charges'])
+print('Statistics=%.3f, p=%.3f' % (stat, p))
+# interpret
+alpha = 0.05
+if p > alpha:
+    print('Sample looks Gaussian (fail to reject H0)')
+else:
+    print('Sample does not look Gaussian (reject H0)')
+
+df.drop(['index'],axis=1,inplace=True)
+
+
+#Quantile-Quantile plot for normailty Test for Age
+import numpy.random as nr
+from statsmodels.graphics.gofplots import qqplot
+from matplotlib import pyplot
+# seed the random number generator
+nr.seed(1)
+# q-q plot
+qqplot(df['age'], line='s')
+pyplot.show()
+
+#Checking 'BMI Distribution'
+#quanatile transform
+x=df['bmi']
+print(np.shape(x))
+# In order to feed x to sklearn, it should be a 2D array (a matrix)
+# Therefore, we must reshape it 
+x1 = x.values.reshape(-1,1)
+print(np.shape(x1))
+
+from pandas import read_csv
+from pandas import DataFrame
+from pandas.plotting import scatter_matrix
+from sklearn.preprocessing import QuantileTransformer
+from matplotlib import pyplot
+# perform a normal quantile transform of the dataset
+trans = QuantileTransformer(n_quantiles=1000, output_distribution='normal',random_state=300)
+data = trans.fit_transform(x1)
+# convert the array back to a dataframe
+dataset = DataFrame(data,columns=['BMI'])
+# histograms of the variables
+dataset.hist()
+pyplot.show()
+
+
+df['BMI']=dataset['BMI']
+df.drop(['bmi'],axis=1,inplace=True)
+
+df=df[df['BMI']<3]
+df=df[df['BMI']>-3]
+df.head()
+
+# inverse transformation
+a=trans.inverse_transform(trans.transform(x1))
+b1=pd.DataFrame(a,columns=['BMI'])
+b1.head()
+
+
+sns.displot(data=df, x='BMI', kde=True,bins=20)
+df.reset_index(inplace=True)
+
+from scipy.stats import shapiro
+# seed the random number generator
+nr.seed(1)
+# normality test
+stat, p = shapiro(df['BMI'])
+print('Statistics=%.3f, p=%.3f' % (stat, p))
+# interpret
+alpha = 0.05
+if p > alpha:
+    print('Sample looks Gaussian (fail to reject H0)')
+else:
+    print('Sample does not look Gaussian (reject H0)')
+
+
+
+# Normality Test (QQ-plot Test)
+import numpy.random as nr
+from statsmodels.graphics.gofplots import qqplot
+from matplotlib import pyplot
+# seed the random number generator
+nr.seed(1)
+# q-q plot
+qqplot(df['BMI'], line='s')
+pyplot.show()
+
+
+df.drop(['index'],axis=1,inplace=True)
+df.head()
+
+sns.pairplot(df)
+
+# Linear Regression Model (OLS)
+# Checking for Linearity
+
+f, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, figsize =(15,3))
+ax1.scatter(df['age'],df['Charges'])
+ax1.set_title('age and charges')
+ax2.scatter(df['children'],df['Charges'])
+ax2.set_title('children and charges')
+ax3.scatter(df['BMI'],df['Charges'])
+ax3.set_title('BMI and charges')
+
+
+plt.show()
+
+# checking for normality
+# central tendency theorem
+a = np.array(df['Charges'])
+sample_num = len(df)
+sample_size = 50
+
+mean_sample_values = []
+
+for i in range(sample_num):
+    sample_mean = np.mean(np.random.choice(a, sample_size, replace=True))
+    mean_sample_values.append(sample_mean) 
+import scipy.stats as ss
+plt.figure(figsize=(12, 8))
+plt.title('Charges Distribution', size=18)
+plt.xlabel('charges', size=18)
+sns.distplot(a, fit=ss.norm, color='blue', kde=False)
+
+
+#checking for multi collinear
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+variables = df[['age','BMI','children']]
+
+# we create a new data frame which will include all the VIFs
+# note that each variable has its own variance inflation factor as this measure is variable specific (not model specific)
+vif = pd.DataFrame()
+
+# here we make use of the variance_inflation_factor, which will basically output the respective VIFs 
+vif["VIF"] = [variance_inflation_factor(variables.values, i) for i in range(variables.shape[1])]
+# Finally, I like to include names so it is easier to explore the result
+vif["Features"] = variables.columns
+vif
+
+
+# Creating dumies
+data= pd.get_dummies(df, drop_first=True)
+data.head()
+data.columns.values
+
+cols=['age', 'children', 'BMI', 'sex_male', 'smoker_yes',
+       'region_northwest', 'region_southeast', 'region_southwest','Charges']
+data = data[cols]
+data.head()
+
+# train/test split
+inputs=data.drop(['Charges'],axis=1)
+targets=data['Charges']
+# Import the scaling module
+from sklearn.preprocessing import StandardScaler
+
+# Create a scaler object
+scaler = StandardScaler()
+# Fit the inputs (calculate the mean and standard deviation feature-wise)
+scaler.fit(inputs)
+# Scale the features and store them in a new variable (the actual scaling procedure)
+inputs_scaled = scaler.transform(inputs)
+
+
+# Import the module for the split
+from sklearn.model_selection import train_test_split
+
+# Split the variables with an 80-20 split and some random state
+# To have the same split as mine, use random_state = 365
+x_train, x_test, y_train, y_test = train_test_split(inputs_scaled, targets, test_size=0.2, random_state=365)
+import statsmodels.api as sm
+# Add a constant. Esentially, we are adding a new column (equal in lenght to x), which consists only of 1s
+x = sm.add_constant(x_train)
+# Fit the model, according to the OLS (ordinary least squares) method with a dependent variable y and an independent x
+results = sm.OLS(y_train,x_train).fit()
+results.summary()
+# DF Model = The model degree of freedom.
+
+
+import sklearn.linear_model as sl
+reg=sl.LinearRegression()
+reg.fit(x_train,y_train)
+
+
+# coefficient of model
+reg.coef_
+
+# Find the R-squared of the model
+reg.score(x_train,y_train)
+
+
+# obtain the bias (intercept) of the regression
+reg.intercept_
+
+
+y_hat= reg.predict(x_train)
+#checking relation between y_train and y_hat
+plt.scatter(y_train, y_hat, alpha=0.2)
+
+# normality (zero mean and same variance) of errors
+sns.distplot(y_train-y_hat)
+plt.title("residuals PDF",size=18)
+
+
+# Create a regression summary where we can compare them with one-another
+reg_summary=pd.DataFrame(inputs.columns.values,columns=['features'])
+reg_summary['weights']=reg.coef_
+reg_summary
+
+import sklearn.feature_selection as sf
+# There are two output arrays
+# The first one contains the F-statistics for each of the regressions
+# The second one contains the p-values of these F-statistics
+p_values = sf.f_regression(x_train,y_train)[1].round(4)
+p_values
+
+# hence this shows Sex, regions should be removed as they are unwanted variables
+
+# Testing
+yhat_test=reg.predict(x_test)
+plt.scatter(y_test,yhat_test)
+# this is showing that Y-pred and Y-test samples are not much linear
+
+
+sns.distplot((y_test-yhat_test),bins=50);
+
+from sklearn import metrics
+print('MAE:', metrics.mean_absolute_error(y_test, yhat_test)) # average error
+print('MSE:', metrics.mean_squared_error(y_test, yhat_test))
+#There is no correct value for MSE. Simply put, the lower the value the better and 0 means the model is perfect
+print('RMSE:', np.sqrt(metrics.mean_squared_error(y_test, yhat_test)))
+
+# The MAE is a linear score which means that all the individual differences are weighted equally in the average. 
+# The RMSE is a quadratic scoring rule which measures the average magnitude of the error. ... 
+# Since the errors are squared before they are averaged, the RMSE gives a relatively high weight to large errors.
+
+#Linear Model evaluation using Resampling Methods
+#Bootstrap Method
+#Import resampling and modeling algorithms
+from sklearn.utils import resample # for Bootstrap sampling
+values = data.values
+#Lets configure Bootstrap
+
+n_iterations = 20  #No. of bootstrap samples to be repeated (created)
+n_size = int(len(data) * 0.8 ) #Size of sample, picking only 80% of the given data in every bootstrap sample
+
+
+#Lets run Bootstrap
+stats = list()
+for i in range(n_iterations):
+
+    #prepare train & test sets
+    train = resample(values, n_samples = n_size) #Sampling with replacement.
+    test = np.array([x for x in values if x.tolist() not in train.tolist()]) 
+    #picking rest of the data not considered in training sample
+    
+    #fit model
+    model = sl.LinearRegression()
+    model.fit(train[:,:-1], train[:,-1]) #model.fit(X_train,y_train)
+    
+    #evaluate model
+    predictions = model.predict(test[:,:-1]) #model.predict(X_test)
+    #accuracy_score(y_test, y_pred)
+    score=np.sqrt(metrics.mean_squared_error(test[:,-1], predictions))
+    
+    #caution, overall accuracy score can mislead when classes are imbalanced
+    
+    print(score)
+    stats.append(score)
+print("Average Error: ", np.mean(score))
+# for regression evaluation MAE, MSE, RMSE and R^2 used 
+# accuracy_score is for classification tasks only. For regression you should use something different
+
+#K-Fold Cross- Validation Method
+from sklearn.model_selection import KFold
+X, y = values[:, :-1], values[:, -1]
+from numpy import array
+from sklearn.model_selection import KFold
+# data sample
+# prepare cross validation
+kfold = KFold(10)
+# enumerate splits
+scores = []
+for train, test in kfold.split(X):
+    X_train, X_test = X[train], X[test]
+    y_train, y_test = y[train], y[test]
+    
+    score=np.sqrt(metrics.mean_squared_error(reg.fit(X_train, y_train).predict(X_test), y_test))
+    scores.append(score)
+    print(score)
+    
+print('Average:',np.mean(scores))
+
+#### Hence Linear Model with technique 'OLS' doesnt gives us the good model Prediction   ####
+
+
